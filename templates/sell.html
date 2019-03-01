@@ -1,0 +1,43 @@
+{% extends "layout.html" %}
+
+{% block title %}
+    sell
+{% endblock %}
+
+{% block main %}
+    <h3>Select which stocks you want to sell</h3>
+    <form action="/sell" method="post">
+        <div class="form-group ">
+            <select name="symbol" class="form-control">
+
+            {% if stocks[0] != 1 %}
+                <option value="#" disabled selected>Select your stock</option>
+                {% for stock in stocks %}
+
+                <option value="{{stock.symbol}}"> {{ stock.company_name }} ({{ stock.symbol }}) </option>
+
+                {% endfor %}
+
+            {% else %}
+
+                <option value="{{stocks[1].symbol}}" selected > {{ stocks[1].company_name }} ({{ stocks[1].symbol }}) </option>
+
+            {% endif %}
+            </select>
+        </div>
+
+        <div class="form-group">
+            <input autocomplete="off" autofocus class="form-control" name="shares" placeholder="#shares" type="text">
+        </div>
+        <button class="btn btn-primary" type="submit" onclick="">Submit</button>
+    </form>
+{% endblock %}
+
+{% block js %}
+<script>
+let symbol = document.querySelector(".class-control")[0]
+
+let shares = document.querySelector(".class-control")[1]
+</script>
+
+{% endblock %}

@@ -1,0 +1,45 @@
+{% extends "layout.html" %}
+
+{% block title %}
+    History
+{% endblock %}
+
+{% block main %}
+    <div>
+        <h3 class="text-center">Transaction history</h3>
+    </div>
+
+    <div class="m-3">
+
+        <!--For each row, make clear whether a stock was bought or sold and include the stock’s symbol,
+        the (purchase or sale) price, the number of shares bought or sold, and the date and time at which the transaction occurred.-->
+        <table class="table table-bordered">
+            <thead>
+                <tr>
+                    <th scope="col">Date and time</th>
+                    <th scope="col">Type</th>
+                    <th scope="col">Name</th>
+                    <th scope="col">Symbol</th>
+                    <th scope="col">Stock cost</th>
+                    <th scope="col">Shares</th>
+                    <th scope="col">Total</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for tran in trans %}
+                <tr>
+                    <td>{{ tran["datetime"] }}</td>
+                    <td>{{ tran["_type"] }}</td>
+                    <td>{{ tran["company_name"] }}</td>
+                    <td>{{ tran["symbol"] }}</td>
+                    <td>{{ tran["price"] }}</td>
+                    <td>{{ tran["shares"] }}</td>
+                    <td>{{ tran["total"] }}</td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+
+
+{% endblock %}

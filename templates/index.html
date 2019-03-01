@@ -1,0 +1,64 @@
+{% extends "layout.html" %}
+
+{% block title %}
+    index
+{% endblock %}
+
+{% block main %}
+    <div>
+        <h2 class="text-center">Dashboard</h2>
+    </div>
+    <div class="m-4">
+        <!--TODO-->
+        <!--display the user’s current cash balance along with a grand total (i.e., stocks' total value plus cash)-->
+        <table class="table table-bordered">
+            <thead>
+                <tr>
+                    <th scope="col">Your cash</th>
+                    <th scope="col">Stock's value</th>
+                    <th scope="col">Grand total</th>
+                </tr>
+            </thead>
+            <tbody>
+                <tr>
+                    <td>{{ cash }}</td>
+                    <td>{{ total_stocks_value }}</td>
+                    <td>{{ grand_total }}</td>
+                </tr>
+            </tbody>
+        </table>
+    </div>
+
+    <div>
+        <h3 class="text-center">Portfolio summary</h3>
+    </div>
+
+    <div class="m-3">
+        <table class="table table-bordered">
+            <thead>
+                <tr>
+                    <th scope="col">Name</th>
+                    <th scope="col">Symbol</th>
+                    <th scope="col">Current stock price</th>
+                    <th scope="col">Shares</th>
+                    <th scope="col">Total</th>
+                    <th scope="col">Sell | Buy</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for stock in stocks %}
+                <tr>
+                    <td>{{ stock["company_name"] }}</td>
+                    <td>{{ stock["symbol"] }}</td>
+                    <td>{{ stock["current_price"] }}</td>
+                    <td>{{ stock["shares"] }}</td>
+                    <td>{{ stock["sum_total"] }}</td>
+                    <td><a href='/sell/{{stock["symbol"]}}'>Sell</a> | <a href='/buy/{{stock["symbol"]}}'>Buy</a></td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+
+
+{% endblock %}

@@ -1,0 +1,30 @@
+{% extends "layout.html" %}
+
+{% block title %}
+    Buy
+{% endblock %}
+
+{% block main %}
+    <form action="/buy" method="post">
+        <div class="form-group ">
+            {% if symbol %}
+            <input autocomplete="off"  class="form-control" name="symbol" placeholder="{{symbol}}" type="text">
+            {% else %}
+            <input autocomplete="off" autofocus class="form-control" name="symbol" placeholder="symbol" type="text">
+            {% endif %}
+        </div>
+        <div class="form-group">
+            <input autocomplete="off" autofocus class="form-control" name="shares" placeholder="#shares" type="text">
+        </div>
+        <button class="btn btn-primary" type="submit" onclick="">Submit</button>
+    </form>
+{% endblock %}
+
+{% block js %}
+<script>
+let symbol = document.querySelector(".class-control")[0]
+
+let shares = document.querySelector(".class-control")[1]
+</script>
+
+{% endblock %}
