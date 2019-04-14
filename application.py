@@ -18,12 +18,15 @@ app = Flask(__name__)
 app.config["TEMPLATES_AUTO_RELOAD"] = True
 
 # Ensure responses aren't cached
+
+
 @app.after_request
 def after_request(response):
     response.headers["Cache-Control"] = "no-cache, no-store, must-revalidate"
     response.headers["Expires"] = 0
     response.headers["Pragma"] = "no-cache"
     return response
+
 
 # Custom filter
 app.jinja_env.filters["usd"] = usd
@@ -35,8 +38,8 @@ app.config["SESSION_TYPE"] = "filesystem"
 Session(app)
 
 # test to see if the session can be prolongue
-app.config["PERMANENT_SESSION_LIFETIME"] = 600;
-#
+app.config["PERMANENT_SESSION_LIFETIME"] = 600
+
 
 # Configure CS50 Library to use SQLite database
 db = SQL("sqlite:///finance.db")
@@ -48,7 +51,8 @@ def index():
     """Show portfolio of stocks"""
 
     # get from the database the amount of money
-    result = db.execute('SELECT "company_name","symbol", SUM("shares") "shares" FROM "trans" WHERE userId == :userId GROUP BY "company_name"', userId = session["user_id"])
+    result = db.execute(
+        'SELECT "company_name","symbol", SUM("shares") "shares" FROM "trans" WHERE userId == :userId GROUP BY "company_name"', userId=session["user_id"])
 
     # global variables for user's cash, user's money from current stocks value, and grand total (aka cash + tota_stocks_value)
     total_stocks_value = 0
@@ -78,10 +82,9 @@ def index():
         index += 1
 
     # sort the list to avoid index-out-of-range errors
-    cero_shares.sort(reverse = True)
+    cero_shares.sort(reverse=True)
     for index in cero_shares:
         del result[index]
-
 
     # get the user's cash
     cash = db.execute('SELECT "cash" FROM "users" WHERE "id" == :id',id=session["user_id"])
@@ -89,7 +92,7 @@ def index():
 
     grand_total = cash + total_stocks_value
 
-    return render_template("index.html",stocks = result, cash = usd(cash), total_stocks_value = usd(total_stocks_value), grand_total = usd(grand_total))
+    return render_template("index.html", stocks=result, cash=usd(cash), total_stocks_value=usd(total_stocks_value), grand_total=usd(grand_total))
 
 
 @app.route("/buy", methods=["GET", "POST"])
@@ -130,31 +133,31 @@ def buy():
         # check if user has enough cash to buy shares
         if cash < x:
             return apology("You don't have enough money")
-        # print(cash,x,(price * shares))
         # substract the amount of the purshase from the user's cash
-        db.execute("UPDATE \"users\" SET \"cash\" = :newCash WHERE \"id\"==:id",id=session["user_id"], newCash = (cash - x))
+        db.execute("UPDATE \"users\" SET \"cash\" = :newCash WHERE \"id\"==:id",id=session["user_id"], newCash=(cash - x))
 
         # add transaction to the transaction database
         result = db.execute("INSERT INTO trans(company_name, userId, symbol, price, shares, total, datetime, _type) VALUES(:company_name,:userId, :symbol, :price, :shares, :total, :datetime, :_type)", company_name = name,
-        userId=session["user_id"], symbol = symbol, price = price, shares = shares, total = price * shares, datetime = date_time, _type =  "buy")
+        userId=session["user_id"], symbol=symbol, price=price, shares=shares, total=price * shares, datetime=date_time, _type="buy")
 
-        flash("You bough the shares!")
-        return render_template("bought.html",name=name,price=usd(price),symbol=symbol,shares=shares, total_spent = usd(shares * price))
+        flash("Bought!")
+        return redirect("/")
+        #return render_template("bought.html",name=name,price=usd(price),symbol=symbol,shares=shares, total_spent = usd(shares * price))
     else:
         return render_template("buy.html")
 
 
-@app.route("/check/<username>", methods=["GET"])
-def check(username):
+@app.route("/check", methods=["GET"])
+def check():
     """Return true if username available, else false, in JSON format"""
-    print(username)
-    result = db.execute("SELECT * FROM users WHERE username == :username", username = username)
+    username = request.args.get("username", None)
+    result = db.execute("SELECT * FROM users WHERE username == :username", username=username)
 
     # return false if the user exist. True otherwise.
     if len(result) > 0:
-        return jsonify(False)
+        return "false"
 
-    return jsonify(True)
+    return "true"
 
 
 @app.route("/history")
@@ -165,7 +168,7 @@ def history():
     the (purchase or sale) price, the number of shares bought or sold, and the date and time at which the transaction occurred.
     """
 
-    trans = db.execute('SELECT * FROM "trans" WHERE userId == :userId ORDER BY datetime', userId = session["user_id"])
+    trans = db.execute('SELECT * FROM "trans" WHERE userId == :userId ORDER BY datetime', userId=session["user_id"])
 
     for tran in trans:
 
@@ -231,8 +234,6 @@ def logout():
 @login_required
 def quote():
     """Get stock quote."""
-    # print(session["user_id"])
-
     if request.method == "POST":
 
         api = lookup(request.form.get("symbol"))
@@ -262,7 +263,7 @@ def register():
         elif confirmation != password:
             return apology("Both passwords must be equal.")
 
-        checker = db.execute('SELECT * FROM users where username == :username', username = username)
+        checker = db.execute('SELECT * FROM users where username == :username', username=username)
 
         if len(checker) > 0:
             return apology("Sorry, username is not available.")
@@ -292,44 +293,38 @@ def sell():
 
 
         stocks = db.execute('SELECT "company_name","symbol", SUM("shares") "shares" FROM "trans" WHERE userId == :userId  AND symbol == :symbol_to_sell  GROUP BY "company_name"',
-        userId = session["user_id"], symbol_to_sell = symbol_to_sell)
+        userId=session["user_id"], symbol_to_sell=symbol_to_sell)
 
         # if nothing was returned from the query it means the user doesn't have stocks on that company.
         try:
             shares_owned = stocks[0]["shares"]
         except:
-            flash("Sorry, you don't have shares on that company.")
-            return redirect("/sell")
+            return apology("Sorry, you don't have that many shares.")
 
         # check if the user can sell that many stocks
         if shares_owned < shares_to_sell:
-            flash("Sorry, you don't have that many shares.")
-            return redirect("/sell")
+            return apology("Sorry, you don't have that many shares.")
 
         stock = lookup(symbol_to_sell)
 
 
         # update trans with a sell transaction
-        trans = db.execute("INSERT INTO trans(company_name, userId, symbol, price, shares, total, datetime, _type) VALUES(:company_name,:userId, :symbol, :price, :shares, :total, :datetime, :_type)", company_name = stock["name"],
-        userId=session["user_id"], symbol = symbol_to_sell, price = stock["price"], shares = -shares_to_sell, total = stock["price"] * -shares_to_sell, datetime = datetime.datetime.now(), _type = "sell")
-
-        # print(trans)
+        trans = db.execute("INSERT INTO trans(company_name, userId, symbol, price, shares, total, datetime, _type) VALUES(:company_name,:userId, :symbol, :price, :shares, :total, :datetime, :_type)", company_name=stock["name"],
+        userId=session["user_id"], symbol=symbol_to_sell, price=stock["price"], shares=-shares_to_sell, total=stock["price"] * -shares_to_sell, datetime=datetime.datetime.now(), _type="sell")
 
         users = db.execute('select "cash" FROM "users" WHERE "id"==:id',id=session["user_id"])
 
         cash = users[0]["cash"]
 
-        # print(cash)
-
         cash = cash + (stock["price"] * shares_to_sell)
 
-        users = db.execute('UPDATE "users" SET "cash" = :cash WHERE "id"==:id',id=session["user_id"], cash = cash)
+        users = db.execute('UPDATE "users" SET "cash" = :cash WHERE "id"==:id',id=session["user_id"], cash=cash)
 
         flash("You succesfully made the sell")
         return redirect("/")
 
 
-    stocks = db.execute('SELECT "company_name","symbol", SUM("shares") "shares" FROM "trans" WHERE userId == :userId GROUP BY "company_name"', userId = session["user_id"])
+    stocks = db.execute('SELECT "company_name","symbol", SUM("shares") "shares" FROM "trans" WHERE userId == :userId GROUP BY "company_name"', userId=session["user_id"])
 
     # make a list of the stocks that have cero shares
     index = 0
@@ -376,18 +371,13 @@ def change_password():
         current_password = request.form.get("current-password")
         new_password = request.form.get("password")
 
-        old_hash = db.execute('SELECT "hash" FROM users WHERE id == :id', id = session["user_id"])
+        old_hash = db.execute('SELECT "hash" FROM users WHERE id == :id', id=session["user_id"])
 
         old_hash = old_hash[0]["hash"]
-        # print(old_hash)
         if check_password_hash(old_hash, current_password):
 
             # update password in the database
-            result = db.execute("UPDATE users SET hash = :new_hash WHERE id == :id", id = session['user_id'], new_hash = generate_password_hash(new_password) )
-
-            # print(result)
-
-
+            result = db.execute("UPDATE users SET hash = :new_hash WHERE id == :id", id=session['user_id'], new_hash=generate_password_hash(new_password) )
 
 
         flash("Your password has been changed correctly.")
@@ -407,3 +397,4 @@ def errorhandler(e):
 # Listen for errors
 for code in default_exceptions:
     app.errorhandler(code)(errorhandler)
+
