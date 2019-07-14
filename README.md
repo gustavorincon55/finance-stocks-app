@@ -3,7 +3,7 @@ Flask app that will let you buy and sell fictional stocks based on real ones fro
 
 Things i practiced by making the app:
 
-- SQL (sqlite3)
+- SQL
 - Python.
 - Flask.
 - Server side programming.
