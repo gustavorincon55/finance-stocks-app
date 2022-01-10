@@ -5,6 +5,9 @@ from flask import redirect, render_template, request, session
 from functools import wraps
 
 
+#finnhub/api token:
+TOKEN = ""
+
 def apology(message, code=400):
     """Render message as an apology to user."""
     def escape(s):
@@ -38,20 +41,33 @@ def lookup(symbol):
     """Look up quote for symbol."""
 
     # Contact API
-    try:
-        response = requests.get(f"https://api.iextrading.com/1.0/stock/{urllib.parse.quote_plus(symbol)}/quote")
-        response.raise_for_status()
+    try:       
+        response_info = requests.get(f"https://finnhub.io/api/v1/search?q={urllib.parse.quote_plus(symbol.upper())}&token={TOKEN}")
+        response_info.raise_for_status()
+        response_quote = requests.get(f"https://finnhub.io/api/v1/quote?symbol={urllib.parse.quote_plus(symbol.upper())}&token={TOKEN}")
+        response_quote.raise_for_status()
+
+        
     except requests.RequestException:
         return None
 
+
     # Parse response
     try:
-        quote = response.json()
+        quote = response_quote.json()
+        info = response_info.json()
+        info = info['result']
+
+        for result in info:
+            if result['symbol'] == symbol.upper():
+                info = result
+                break
+
 
         return {
-            "name": quote["companyName"],
-            "price": float(quote["latestPrice"]),
-            "symbol": quote["symbol"]
+            "name": info["description"],
+            "price": float(quote["c"]),
+            "symbol": info["symbol"]
         }
     except (KeyError, TypeError, ValueError):
         return None
